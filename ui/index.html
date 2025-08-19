@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DockerFlow - Claude-Flow Control Center</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.2.1/css/xterm.css">
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --dark: #1e1e1e;
+            --light: #f7f7f7;
+            --border: #e0e0e0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo h1 {
+            color: #333;
+            font-size: 24px;
+        }
+        
+        .status-bar {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            background: var(--light);
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4ade80;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 20px;
+            height: calc(100vh - 120px);
+        }
+        
+        .sidebar {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .sidebar h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 14px;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+        
+        .command-list {
+            list-style: none;
+        }
+        
+        .command-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: var(--light);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        
+        .command-item:hover {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .terminal-container {
+            background: var(--dark);
+            border-radius: 10px;
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #333;
+        }
+        
+        .terminal-title {
+            color: white;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .terminal-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-small {
+            padding: 5px 10px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .btn-small:hover {
+            background: #444;
+        }
+        
+        #terminal {
+            flex: 1;
+            background: #0d1117;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        
+        .input-bar {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            gap: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .input-bar input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .input-bar input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .btn-primary {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+        
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .quick-btn {
+            padding: 8px 15px;
+            background: white;
+            color: #333;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        
+        .quick-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">
+                <span style="font-size: 30px;">🚀</span>
+                <h1>DockerFlow</h1>
+            </div>
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="status-dot"></span>
+                    <span id="api-status">API: Online</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-dot"></span>
+                    <span id="ws-status">WebSocket: Connected</span>
+                </div>
+                <div class="status-item">
+                    <span id="claude-version">Claude-Flow: Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="grid">
+            <div class="sidebar">
+                <h3>Quick Commands</h3>
+                <ul class="command-list">
+                    <li class="command-item" onclick="runCommand('npx claude-flow --version')">
+                        📊 Check Version
+                    </li>
+                    <li class="command-item" onclick="runCommand('npx claude-flow scan')">
+                        🔍 Scan Project
+                    </li>
+                    <li class="command-item" onclick="runCommand('npx claude-flow repair --dry-run')">
+                        🔧 Repair (Dry Run)
+                    </li>
+                    <li class="command-item" onclick="runCommand('npx claude-flow sparc modes')">
+                        🎯 SPARC Modes
+                    </li>
+                    <li class="command-item" onclick="runCommand('npx claude-flow swarm init mesh')">
+                        🐝 Initialize Swarm
+                    </li>
+                    <li class="command-item" onclick="runCommand('npx claude-flow agent spawn coder')">
+                        🤖 Spawn Agent
+                    </li>
+                    <li class="command-item" onclick="runCommand('npx claude-flow swarm status')">
+                        📈 Swarm Status
+                    </li>
+                    <li class="command-item" onclick="runCommand('npx claude-flow --help')">
+                        ❓ Help
+                    </li>
+                </ul>
+                
+                <h3 style="margin-top: 30px;">Resources</h3>
+                <ul class="command-list">
+                    <li class="command-item" onclick="window.open('http://localhost:7681', '_blank')">
+                        💻 Full Terminal
+                    </li>
+                    <li class="command-item" onclick="window.open('http://localhost:5002/docs', '_blank')">
+                        📚 API Docs
+                    </li>
+                    <li class="command-item" onclick="window.open('https://github.com/ruvnet/claude-flow', '_blank')">
+                        🌐 GitHub
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="main-content">
+                <div class="terminal-container">
+                    <div class="terminal-header">
+                        <div class="terminal-title">
+                            <span>📟</span>
+                            <span>Terminal Output</span>
+                            <span id="connection-status" class="loading" style="display: none;"></span>
+                        </div>
+                        <div class="terminal-actions">
+                            <button class="btn-small" onclick="clearTerminal()">Clear</button>
+                            <button class="btn-small" onclick="downloadLogs()">Download Logs</button>
+                            <button class="btn-small" onclick="toggleTheme()">Toggle Theme</button>
+                        </div>
+                    </div>
+                    <div id="terminal"></div>
+                </div>
+                
+                <div class="input-bar">
+                    <div class="quick-actions">
+                        <button class="quick-btn" onclick="insertCommand('npx claude-flow sparc run ')">
+                            SPARC Run
+                        </button>
+                        <button class="quick-btn" onclick="insertCommand('npx claude-flow agent spawn ')">
+                            Spawn Agent
+                        </button>
+                        <button class="quick-btn" onclick="insertCommand('npx claude-flow memory ')">
+                            Memory
+                        </button>
+                    </div>
+                    <input type="text" id="command-input" placeholder="Enter command (e.g., npx claude-flow sparc run architect 'design system')" onkeypress="if(event.key==='Enter') runCustomCommand()">
+                    <button class="btn-primary" onclick="runCustomCommand()">Run Command</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.2.1/lib/xterm.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.7.0/lib/xterm-addon-fit.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.8.0/lib/xterm-addon-web-links.js"></script>
+    <script>
+        // Initialize terminal
+        const term = new Terminal({
+            cursorBlink: true,
+            fontSize: 14,
+            fontFamily: 'Cascadia Code, Menlo, Monaco, "Courier New", monospace',
+            theme: {
+                background: '#0d1117',
+                foreground: '#c9d1d9',
+                cursor: '#58a6ff',
+                selection: '#3392ff44',
+                black: '#484f58',
+                red: '#ff7b72',
+                green: '#3fb950',
+                yellow: '#d29922',
+                blue: '#58a6ff',
+                magenta: '#bc8cff',
+                cyan: '#39c5cf',
+                white: '#b1bac4'
+            }
+        });
+        
+        const fitAddon = new FitAddon.FitAddon();
+        term.loadAddon(fitAddon);
+        term.open(document.getElementById('terminal'));
+        fitAddon.fit();
+        
+        // WebSocket connection
+        let ws = null;
+        let commandHistory = [];
+        let historyIndex = -1;
+        
+        function connectWebSocket() {
+            ws = new WebSocket('ws://localhost:5001/ws');
+            
+            ws.onopen = () => {
+                document.getElementById('ws-status').textContent = 'WebSocket: Connected';
+                document.getElementById('connection-status').style.display = 'none';
+                term.writeln('\x1b[1;36m🚀 Connected to DockerFlow\x1b[0m');
+                term.writeln('Ready for commands...\n');
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                
+                switch(data.type) {
+                    case 'output':
+                        term.write(data.data);
+                        break;
+                    case 'command':
+                        term.writeln(`\x1b[1;33m$ ${data.cmd}\x1b[0m`);
+                        break;
+                    case 'complete':
+                        term.writeln(`\x1b[1;32m✓ Process completed (exit code: ${data.exit_code})\x1b[0m\n`);
+                        break;
+                    case 'error':
+                        term.writeln(`\x1b[1;31m✗ Error: ${data.message}\x1b[0m`);
+                        break;
+                }
+            };
+            
+            ws.onerror = () => {
+                document.getElementById('ws-status').textContent = 'WebSocket: Error';
+                term.writeln('\x1b[1;31m✗ WebSocket error\x1b[0m');
+            };
+            
+            ws.onclose = () => {
+                document.getElementById('ws-status').textContent = 'WebSocket: Disconnected';
+                term.writeln('\x1b[1;33m⚠ Connection lost, reconnecting...\x1b[0m');
+                setTimeout(connectWebSocket, 2000);
+            };
+        }
+        
+        function runCommand(cmd) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                document.getElementById('connection-status').style.display = 'inline-block';
+                ws.send(JSON.stringify({ cmd, cwd: '/workspace' }));
+                commandHistory.push(cmd);
+                historyIndex = commandHistory.length;
+            } else {
+                term.writeln('\x1b[1;31m✗ Not connected. Please wait...\x1b[0m');
+            }
+        }
+        
+        function runCustomCommand() {
+            const input = document.getElementById('command-input');
+            const cmd = input.value.trim();
+            if (cmd) {
+                runCommand(cmd);
+                input.value = '';
+            }
+        }
+        
+        function clearTerminal() {
+            term.clear();
+        }
+        
+        function insertCommand(cmd) {
+            document.getElementById('command-input').value = cmd;
+            document.getElementById('command-input').focus();
+        }
+        
+        function downloadLogs() {
+            const logs = term.buffer.active.getLines(0, term.buffer.active.length)
+                .map(line => line.translateToString())
+                .join('\n');
+            
+            const blob = new Blob([logs], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `dockerflow-logs-${new Date().toISOString()}.txt`;
+            a.click();
+        }
+        
+        function toggleTheme() {
+            // Toggle between dark and light themes
+            const isDark = term.options.theme.background === '#0d1117';
+            term.options.theme = isDark ? {
+                background: '#ffffff',
+                foreground: '#24292e',
+                cursor: '#0969da'
+            } : {
+                background: '#0d1117',
+                foreground: '#c9d1d9',
+                cursor: '#58a6ff'
+            };
+        }
+        
+        // Check API status
+        async function checkStatus() {
+            try {
+                const res = await fetch('http://localhost:5002/status');
+                const data = await res.json();
+                document.getElementById('api-status').textContent = 'API: Online';
+                document.getElementById('claude-version').textContent = `Claude-Flow: ${data.system.claude_flow}`;
+            } catch (e) {
+                document.getElementById('api-status').textContent = 'API: Offline';
+                setTimeout(checkStatus, 3000);
+            }
+        }
+        
+        // Command history navigation
+        document.getElementById('command-input').addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp' && historyIndex > 0) {
+                historyIndex--;
+                e.target.value = commandHistory[historyIndex];
+                e.preventDefault();
+            } else if (e.key === 'ArrowDown' && historyIndex < commandHistory.length - 1) {
+                historyIndex++;
+                e.target.value = commandHistory[historyIndex];
+                e.preventDefault();
+            }
+        });
+        
+        // Window resize handler
+        window.addEventListener('resize', () => fitAddon.fit());
+        
+        // Initialize
+        connectWebSocket();
+        checkStatus();
+        
+        // Welcome message
+        term.writeln('\x1b[1;36m╔══════════════════════════════════════════╗\x1b[0m');
+        term.writeln('\x1b[1;36m║        🚀 DockerFlow Terminal 🚀         ║\x1b[0m');
+        term.writeln('\x1b[1;36m║   Claude-Flow & Claude-Code Environment  ║\x1b[0m');
+        term.writeln('\x1b[1;36m╚══════════════════════════════════════════╝\x1b[0m');
+        term.writeln('');
+        term.writeln('Connecting to services...');
+    </script>
+</body>
+</html>

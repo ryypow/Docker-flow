@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DockerFlow Terminal</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.2.1/css/xterm.css">
+    <link rel="stylesheet" href="/static/css/terminal.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+</head>
+<body class="dark-theme">
+    <div class="terminal-container">
+        <!-- Header -->
+        <div class="terminal-header">
+            <div class="terminal-title">
+                <span class="logo">🚀</span>
+                <h1>DockerFlow Terminal</h1>
+                <div class="session-info">
+                    <span id="session-id">Session: Connecting...</span>
+                    <div class="connection-status" id="connection-status">
+                        <span class="status-dot offline" id="status-dot"></span>
+                        <span id="status-text">Connecting...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="terminal-controls">
+                <button class="control-btn" onclick="newSession()" title="New Session">
+                    <span>➕</span> New
+                </button>
+                <button class="control-btn" onclick="clearTerminal()" title="Clear Terminal">
+                    <span>🧹</span> Clear
+                </button>
+                <button class="control-btn" onclick="toggleTheme()" title="Toggle Theme">
+                    <span id="theme-icon">🌙</span> Theme
+                </button>
+                <button class="control-btn" onclick="downloadLogs()" title="Download Logs">
+                    <span>💾</span> Save
+                </button>
+                <button class="control-btn" onclick="showSettings()" title="Settings">
+                    <span>⚙️</span> Settings
+                </button>
+            </div>
+        </div>
+
+        <!-- Terminal Area -->
+        <div class="terminal-wrapper">
+            <div id="terminal" class="terminal"></div>
+            <div class="terminal-overlay" id="terminal-overlay" style="display: none;">
+                <div class="overlay-content">
+                    <div class="spinner"></div>
+                    <p>Connecting to terminal...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Panel -->
+        <div class="bottom-panel">
+            <div class="quick-commands">
+                <div class="command-group">
+                    <span class="group-label">Quick Commands:</span>
+                    <button class="quick-cmd" onclick="runQuickCommand('npx claude-flow --version')">
+                        Version
+                    </button>
+                    <button class="quick-cmd" onclick="runQuickCommand('npx claude-flow scan')">
+                        Scan
+                    </button>
+                    <button class="quick-cmd" onclick="runQuickCommand('npx claude-flow sparc modes')">
+                        SPARC
+                    </button>
+                    <button class="quick-cmd" onclick="runQuickCommand('npx claude-flow --help')">
+                        Help
+                    </button>
+                </div>
+            </div>
+            
+            <div class="status-bar">
+                <div class="status-item">
+                    <span>CWD:</span>
+                    <span id="current-dir">/workspace</span>
+                </div>
+                <div class="status-item">
+                    <span>Shell:</span>
+                    <span id="shell-type">/bin/bash</span>
+                </div>
+                <div class="status-item">
+                    <span>Uptime:</span>
+                    <span id="session-uptime">00:00</span>
+                </div>
+                <div class="status-item">
+                    <span>Size:</span>
+                    <span id="terminal-size">80x24</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settings-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Terminal Settings</h3>
+                <button class="close-btn" onclick="hideSettings()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label>Font Size:</label>
+                    <input type="range" id="font-size" min="10" max="24" value="14" onchange="updateFontSize(this.value)">
+                    <span id="font-size-value">14px</span>
+                </div>
+                <div class="setting-group">
+                    <label>Font Family:</label>
+                    <select id="font-family" onchange="updateFontFamily(this.value)">
+                        <option value="'Cascadia Code', 'Menlo', 'Monaco', 'Courier New', monospace">Cascadia Code</option>
+                        <option value="'Fira Code', monospace">Fira Code</option>
+                        <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
+                        <option value="'Source Code Pro', monospace">Source Code Pro</option>
+                        <option value="monospace">System Monospace</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label>Cursor Style:</label>
+                    <select id="cursor-style" onchange="updateCursorStyle(this.value)">
+                        <option value="block">Block</option>
+                        <option value="underline">Underline</option>
+                        <option value="bar">Bar</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label>
+                        <input type="checkbox" id="cursor-blink" checked onchange="updateCursorBlink(this.checked)">
+                        Cursor Blink
+                    </label>
+                </div>
+                <div class="setting-group">
+                    <label>
+                        <input type="checkbox" id="bell-sound" onchange="updateBellSound(this.checked)">
+                        Bell Sound
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.2.1/lib/xterm.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.7.0/lib/xterm-addon-fit.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.8.0/lib/xterm-addon-web-links.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-search@0.11.0/lib/xterm-addon-search.js"></script>
+    <script src="/static/js/terminal.js"></script>
+</body>
+</html>

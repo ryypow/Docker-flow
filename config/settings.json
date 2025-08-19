@@ -1,0 +1,176 @@
+{
+  "app": {
+    "name": "DockerFlow",
+    "version": "2.0.0",
+    "description": "Complete claude-flow and claude-code containerized environment",
+    "author": "DockerFlow Team",
+    "license": "MIT",
+    "homepage": "https://github.com/ruvnet/claude-flow"
+  },
+  "services": {
+    "ui": {
+      "enabled": true,
+      "port": 5000,
+      "host": "0.0.0.0",
+      "static_path": "/app/ui",
+      "auto_reload": false,
+      "gzip": true,
+      "max_body_size": "10MB"
+    },
+    "websocket": {
+      "enabled": true,
+      "port": 5001,
+      "host": "0.0.0.0",
+      "heartbeat_interval": 30,
+      "max_connections": 100,
+      "message_queue_size": 1000,
+      "compression": true
+    },
+    "api": {
+      "enabled": true,
+      "port": 5002,
+      "host": "0.0.0.0",
+      "docs": true,
+      "redoc": true,
+      "openapi_url": "/openapi.json",
+      "request_timeout": 300,
+      "response_timeout": 300
+    },
+    "terminal": {
+      "enabled": true,
+      "port": 5003,
+      "host": "0.0.0.0",
+      "pty_timeout": 3600,
+      "max_sessions": 50,
+      "session_cleanup_interval": 300,
+      "default_shell": "/bin/bash",
+      "allowed_shells": ["/bin/bash", "/bin/zsh", "/bin/fish"]
+    },
+    "ttyd": {
+      "enabled": true,
+      "port": 7681,
+      "host": "0.0.0.0",
+      "command": "/bin/bash",
+      "options": {
+        "readonly": false,
+        "max_clients": 10,
+        "terminal_type": "xterm-256color"
+      }
+    }
+  },
+  "development": {
+    "debug": false,
+    "hot_reload": false,
+    "profiling": false,
+    "verbose_logging": false,
+    "auto_restart": true,
+    "file_watching": false
+  },
+  "health_checks": {
+    "enabled": true,
+    "interval": 30,
+    "timeout": 10,
+    "retries": 3,
+    "endpoints": {
+      "api": "/health",
+      "websocket": "/health",
+      "terminal": "/health"
+    }
+  },
+  "monitoring": {
+    "metrics": {
+      "enabled": true,
+      "collection_interval": 60,
+      "retention_days": 7,
+      "export_prometheus": false
+    },
+    "alerts": {
+      "enabled": false,
+      "cpu_threshold": 80,
+      "memory_threshold": 85,
+      "disk_threshold": 90,
+      "error_rate_threshold": 10
+    },
+    "dashboards": {
+      "enabled": true,
+      "auto_refresh": 30,
+      "real_time_updates": true
+    }
+  },
+  "storage": {
+    "workspace": {
+      "path": "/workspace",
+      "auto_backup": false,
+      "backup_interval": 3600,
+      "max_backups": 10
+    },
+    "logs": {
+      "path": "/app/logs",
+      "rotation": "daily",
+      "max_size": "100MB",
+      "max_files": 30,
+      "compression": true
+    },
+    "cache": {
+      "path": "/app/cache",
+      "max_size": "1GB",
+      "cleanup_interval": 3600,
+      "ttl": 86400
+    },
+    "temp": {
+      "path": "/tmp",
+      "cleanup_on_startup": true,
+      "max_age_hours": 24
+    }
+  },
+  "user_interface": {
+    "theme": {
+      "default": "dark",
+      "available": ["dark", "light", "auto"],
+      "custom_css": false
+    },
+    "terminal": {
+      "font_family": "Cascadia Code, Menlo, Monaco, Courier New, monospace",
+      "font_size": 14,
+      "cursor_blink": true,
+      "cursor_style": "block",
+      "scrollback": 10000,
+      "bell_sound": false
+    },
+    "editor": {
+      "font_family": "Cascadia Code, Menlo, Monaco, Courier New, monospace",
+      "font_size": 14,
+      "tab_size": 2,
+      "word_wrap": true,
+      "line_numbers": true,
+      "syntax_highlighting": true
+    },
+    "layout": {
+      "sidebar_width": 250,
+      "panel_height": 200,
+      "responsive": true,
+      "mobile_friendly": true
+    }
+  },
+  "experimental": {
+    "features": {
+      "ai_completions": false,
+      "voice_commands": false,
+      "collaborative_editing": false,
+      "plugin_system": false
+    },
+    "beta_features": {
+      "enhanced_search": true,
+      "smart_suggestions": true,
+      "auto_formatting": true,
+      "context_awareness": true
+    }
+  },
+  "compliance": {
+    "data_privacy": true,
+    "gdpr_compliant": false,
+    "audit_logging": false,
+    "encryption_at_rest": false,
+    "encryption_in_transit": true
+  }
+}

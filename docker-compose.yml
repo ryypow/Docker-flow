@@ -1,0 +1,75 @@
+version: "3.9"
+
+name: dockerflow
+
+services:
+  dockerflow:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USER: dockerflow
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    image: dockerflow/claude-flow:latest
+    container_name: dockerflow
+    hostname: dockerflow
+    working_dir: /workspace
+    ports:
+      - "5000:5000"  # Main UI
+      - "5001:5001"  # WebSocket
+      - "5002:5002"  # REST API
+      - "7681:7681"  # ttyd terminal
+    env_file: .env
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      HF_TOKEN: ${HF_TOKEN}
+      CLAUDE_CODE_FLAGS: "--dangerously-skip-permissions"
+      TERM: xterm-256color
+    volumes:
+      - ./workspace:/workspace:rw
+      - node-cache:/home/dockerflow/.npm
+      - pip-cache:/home/dockerflow/.cache/pip
+      - claude-cache:/home/dockerflow/.claude
+    networks:
+      - dockerflow-net
+    tty: true
+    stdin_open: true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5002/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+      # Uncomment for GPU support
+      # reservations:
+      #   devices:
+      #     - driver: nvidia
+      #       count: 1
+      #       capabilities: [gpu]
+
+volumes:
+  node-cache:
+    driver: local
+  pip-cache:
+    driver: local
+  claude-cache:
+    driver: local
+
+networks:
+  dockerflow-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
