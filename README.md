@@ -251,7 +251,6 @@ MIT License - See LICENSE file for details
 - **Documentation**: This README
 - **API Reference**: http://localhost:5002/docs
 - **Issues**: GitHub Issues
-- **Community**: Discord/Slack
 
 ---
 
